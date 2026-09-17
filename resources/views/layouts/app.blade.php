@@ -40,10 +40,15 @@
     @stack('styles')
 </head>
 
-<body class="bg-slate-50 text-slate-800 min-h-screen flex selection:bg-blue-500 selection:text-white">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex selection:bg-blue-500 selection:text-white relative">
 
-    <!-- SIDEBAR KIRI (Desktop) -->
-    <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col h-screen fixed top-0 left-0 z-40">
+    <!-- Elemen latar belakang gelap untuk HP -->
+    <div id="mobile-overlay" class="sidebar-overlay"></div>
+
+    <!-- SIDEBAR KIRI (Desktop & Mobile) -->
+    <!-- PENAMBAHAN ID: id="main-sidebar" -->
+    <aside id="main-sidebar"
+        class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col h-screen fixed top-0 left-0 z-40">
         <!-- Logo Area -->
         <div class="h-20 flex items-center px-6 border-b border-slate-100">
             <i class="fa-solid fa-house-chimney text-emerald-600 text-2xl"></i>
@@ -72,11 +77,11 @@
                 <i class="fa-solid fa-users w-5 text-center"></i> Data Pelanggan
             </button>
             <!-- Hanya tampil jika yang login adalah admin -->
-            @if(Auth::user()->role === 'admin')
-            <button onclick="switchTab('admins')" id="nav-admins"
-                class="w-full text-left px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-xl flex items-center gap-3 font-medium transition">
-                <i class="fa-solid fa-user-shield w-5 text-center"></i> Kelola Admin
-            </button>
+            @if (Auth::user()->role === 'admin')
+                <button onclick="switchTab('admins')" id="nav-admins"
+                    class="w-full text-left px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-xl flex items-center gap-3 font-medium transition">
+                    <i class="fa-solid fa-user-shield w-5 text-center"></i> Kelola Admin
+                </button>
             @endif
             <button onclick="switchTab('settings')" id="nav-settings"
                 class="w-full text-left px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-xl flex items-center gap-3 font-medium transition">
@@ -115,7 +120,8 @@
             <i class="fa-solid fa-house-chimney text-emerald-600 text-xl"></i>
             <span class="font-extrabold text-emerald-700 text-base">PANDE MESARI</span>
         </div>
-        <button class="text-slate-600 text-xl"><i class="fa-solid fa-bars"></i></button>
+        <!-- PENAMBAHAN ID: id="mobile-menu-btn" -->
+        <button id="mobile-menu-btn" class="text-slate-600 text-xl"><i class="fa-solid fa-bars"></i></button>
     </header>
 
     <!-- KONTEN UTAMA KANAN -->
@@ -126,6 +132,89 @@
 
     @stack('modals')
     @stack('scripts')
+
+    <!-- KODE CSS DAN JAVASCRIPT UNTUK ANIMASI MENU HP -->
+    <style>
+        /* Animasi khusus tampilan HP (di bawah 768px) */
+        @media (max-width: 768px) {
+            #main-sidebar {
+                position: fixed;
+                top: 0;
+                left: -300px;
+                /* Sembunyikan di luar layar kiri */
+                width: 260px;
+                height: 100vh;
+                background-color: #ffffff;
+                z-index: 1050;
+                transition: left 0.3s ease;
+                box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+                display: flex !important;
+                /* Timpa class hidden dari tailwind */
+            }
+
+            /* Class ini akan dipanggil oleh JS untuk memunculkan menu */
+            #main-sidebar.show-sidebar {
+                left: 0;
+            }
+
+            /* Pengaturan latar belakang gelap (overlay) */
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
+                display: none;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
+        /* Sembunyikan overlay jika dibuka di komputer */
+        @media (min-width: 769px) {
+            .sidebar-overlay {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+
+            if (menuBtn && sidebar) {
+                // Jika tombol garis tiga diklik
+                menuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    sidebar.classList.toggle('show-sidebar');
+                    overlay.classList.toggle('show');
+                });
+
+                // Jika area gelap di luar menu diklik, tutup sidebar
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show-sidebar');
+                    overlay.classList.remove('show');
+                });
+
+                // Tambahan: Tutup sidebar otomatis jika salah satu menu diklik (pindah halaman)
+                const navButtons = sidebar.querySelectorAll('button');
+                navButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        if (window.innerWidth <= 768) {
+                            sidebar.classList.remove('show-sidebar');
+                            overlay.classList.remove('show');
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
